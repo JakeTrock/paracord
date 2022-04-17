@@ -1,0 +1,61 @@
+{
+    "name": "p2chat",
+    "version": "2.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "devserv": "webpack-dev-server --config webpack.dev.js --mode development",
+        "start": "bittorrent-tracker -p 5000 & yarn devserv",
+        "build": "webpack --config webpack.prod.js --mode production",
+        "preview": "npm run build && http-server dist"
+    },
+    "repository": {
+        "type": "git",
+        "url": ""
+    },
+    "keywords": [],
+    "author": "subins2000",
+    "license": "ISC",
+    "bugs": {
+        "url": ""
+    },
+    "homepage": "",
+    "dependencies": {
+        "p2pt": "^1.5.1",
+        "simple-peer": "^9.11.1"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.17.9",
+        "@babel/preset-env": "^7.16.11",
+        "@fullhuman/postcss-purgecss": "^4.1.3",
+        "ajv": "^8.11.0",
+        "autoprefixer": "^10.4.4",
+        "babel-loader": "^8.2.4",
+        "buffer": "^6.0.3",
+        "clean-webpack-plugin": "^4.0.0",
+        "css-loader": "^6.7.1",
+        "cssnano": "^5.1.7",
+        "favicons-webpack-plugin": "^5.0.2",
+        "file-loader": "^6.2.0",
+        "html-webpack-plugin": "^5.5.0",
+        "http-server": "^14.1.0",
+        "mini-css-extract-plugin": "^2.6.0",
+        "node-sass": "^7.0.1",
+        "normalize.css": "^8.0.1",
+        "optimize-css-assets-webpack-plugin": "^6.0.1",
+        "postcss-loader": "^6.2.1",
+        "process": "^0.11.10",
+        "sass": "^1.50.0",
+        "sass-loader": "^12.6.0",
+        "source-map-loader": "^3.0.1",
+        "style-loader": "^3.3.1",
+        "url-loader": "^4.1.1",
+        "vue": "^3.2.33",
+        "vue-loader": "^17.0.0",
+        "vue-template-compiler": "^2.6.14",
+        "webpack": "^5.72.0",
+        "webpack-cli": "^4.9.2",
+        "webpack-dev-server": "^4.8.1"
+    }
+}
