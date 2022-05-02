@@ -86,13 +86,14 @@ def get_patch_delete_enclave(id):
             # check new signature of nextsign
             # save signature to postsign and nextsign to prevsign
             # generate key and set it
+            eckeys = enclave.sigblock.split("::")
 
-            if verify_signature(usr_id, enclave.oldsign, enclave.signedold):  # check user key
-                if verify_signature(usr_id, enclave.nextsign, signed_data):  # check nextkey
+            if verify_signature(usr_id, eckeys[0], eckeys[1]):  # check user key
+                if verify_signature(usr_id, eckeys[3], signed_data):  # check nextkey
                     if request.method == 'PATCH' and request.form['enclave'] is not None:
                         attribute_updates = { 'body': { 'Value': request.form['enclave'], 'Action': 'PUT' },
-                            'sigblock': { 'Value': f"{enclave.nextsign}::{signed_data}::{token_bytes(20)}",
-                                          'Action': 'PUT' }, }
+                                              'sigblock': { 'Value': f"{eckeys[3]}::{signed_data}::{token_bytes(20)}",
+                                                            'Action': 'PUT' }, }
                         enclaveTable.update_item(Key=key, AttributeUpdates=attribute_updates)
                         return json_response({ "message": "Entry updated" })
                     elif request.method == 'DELETE':
@@ -112,7 +113,6 @@ def get_patch_delete_enclave(id):
 
 @server.route('/Shard', methods=['POST'])
 def post_shards():
-    digest = SHA256.new()
     presig = request.form['presig']
     postsig = request.form['postsig']
     usr_id = request.form['usrId']
@@ -120,7 +120,7 @@ def post_shards():
     if verify_signature(usr_id, presig, postsig):
         ecid = str(uuid.uuid4())
         post_obj = { 'id': ecid, 'sigblock': f"{presig}::{postsig}::{token_bytes(20)}",
-            'id_attach': request.form['id_attach'], 'body': request.form['body'] }
+                     'id_attach': request.form['id_attach'], 'body': request.form['body'] }
 
         if 'burn_days' in request.form and is_int(request.form['burn_days']):
             post_obj['burn_at'] = (datetime.now() + datetime.timedelta(days=request.form['burn_days'])).isoformat()
@@ -157,13 +157,14 @@ def get_patch_delete_shard(id):
             # check new signature of nextsign
             # save signature to postsign and nextsign to prevsign
             # generate key and set it
+            sikeys = shard.sigblock.split("::")
 
-            if verify_signature(usr_id, shard.oldsign, shard.signedold):  # check user key
-                if verify_signature(usr_id, shard.nextsign, signed_data):  # check nextkey
+            if verify_signature(usr_id, sikeys[0], sikeys[1]):  # check user key
+                if verify_signature(usr_id, sikeys[3], signed_data):  # check nextkey
                     if request.method == 'PATCH' and request.form['shard'] is not None:
                         attribute_updates = { 'body': { 'Value': request.form['shard'], 'Action': 'PUT' },
-                            'sigblock': { 'Value': f"{shard.nextsign}::{signed_data}::{token_bytes(20)}",
-                                          'Action': 'PUT' } }
+                                              'sigblock': { 'Value': f"{sikeys[3]}::{signed_data}::{token_bytes(20)}",
+                                                            'Action': 'PUT' } }
                         shardTable.update_item(Key=key, AttributeUpdates=attribute_updates)
                         return json_response({ "message": "Entry updated" })
                     elif request.method == 'DELETE':
