@@ -115,7 +115,6 @@ def get_patch_delete_enclave(id):
 
 # SHARD HANDLERS
 
-
 @server.route('/Shard', methods=['POST'])
 def post_shards():
     digest = SHA256.new()
