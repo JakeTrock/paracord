@@ -1,0 +1,4 @@
+requests
+flask-lambda2
+boto3
+pycryptodome==3.14.1

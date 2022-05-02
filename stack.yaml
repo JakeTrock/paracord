@@ -1,0 +1,132 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  paracord-backend
+  He who creates open protocol is he who shapes the future.
+  He who locks his protocol behind a wall is doomed to the infinite tech turnover cycle.
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  Enclave: # this can be a user, spine, or key enclave
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Enclaves
+      AttributeDefinitions:
+        - AttributeName: id #either user name or id from user link
+          AttributeType: S
+        - AttributeName: sigblock # oldsignable::oldsignature::nextsignable
+          AttributeType: S
+        - AttributeName: type #prevents injection of false messages, Are you a user(0), a spine(1), a key(2)?
+          AttributeType: N
+        - AttributeName: body #encrypted data
+          AttributeType: B
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+          # TODO: could/should type be a sort?
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  Shard: # self destructing message
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Shards
+      AttributeDefinitions:
+        - AttributeName: id #either user name or id from user link
+          AttributeType: S
+        - AttributeName: id_attach # channel id to link to TODO: this is sort of a problem, you can see who was talking to who, and extrapolate when from the burn, you can still reverse this by making this a normal ID though
+          AttributeType: S
+        - AttributeName: sigblock # oldsignable::oldsignature::nextsignable
+          AttributeType: S
+        - AttributeName: body #encrypted payload
+          AttributeType: B
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: id_attach
+          KeyType: RANGE
+        - AttributeName: burn_at #sort by time you burn
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: burn_at #expire date as unix timestamp
+        Enabled: true
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  ParacordFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: /
+      Handler: server.server
+      Runtime: python3.10
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref Enclaves
+        - DynamoDBCrudPolicy:
+            TableName:
+              !Ref Shards
+      Events:
+        getEnclave:
+          Type: Api
+          Properties:
+            Path: /Enclave/{id}/
+            Method: get
+        uploadEnclave:
+          Type: Api #returns ID of thingy you just created
+          Properties:
+            Path: /Enclave
+            Method: post
+        updateEnclave:
+          Type: Api # requires signature identification
+          Properties:
+            Path: /Enclave/{id}/
+            Method: patch
+        deleteEnclave:
+          Type: Api # requires signature identification
+          Properties:
+            Path: /Enclave/{id}/
+            Method: delete
+        getShards:
+          Type: Api
+          Properties:
+            Path: /Shard/{id}/
+            Method: get
+        uploadShard:
+          Type: Api #returns ID of thingy you just created
+          Properties:
+            Path: /Shard/{id}/
+            Method: post
+        updateShard:
+          Type: Api # updates item if you can successfully sign a garbage string
+          Properties: 
+            Path: /Shard/{id}/
+            Method: patch
+        deleteShard:
+          Type: Api # deletes item if you can successfully sign a garbage string
+          Properties: 
+            Path: /Shard/{id}/
+            Method: delete
+        updateShard:
+          Type: Api # updates item if you can successfully sign a garbage string
+          Properties: 
+            Path: /Shards/{id}/
+            Method: patch
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  ParacordApi:
+    Description: "API Gateway endpoint URL for Prod stage for Paracord"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  Paracord:
+    Description: "Paracord Lambda Function ARN"
+    Value: !GetAtt ParacordFunction.Arn
+  ParacordLambdaIamRole:
+    Description: "Implicit IAM Role created for Paracord Lambda"
+    Value: !GetAtt ParacordLambdaFunctionRole.Arn
