@@ -84,23 +84,27 @@ class UpdateEnclave(BaseModel):
     enclave: str
 
 
-@app.get('/Enclave/{id}')
-def get_enclave(shard_id: str, shard_form: UpdateEnclave):
-    get_patch_delete_enclave(shard_id, shard_form, "GET")
+class DeleteEnclave(BaseModel):
+    signedData: str
+    usrId: str
 
 
-@app.patch('/Enclave/{id}')
-def patch_enclave(shard_id: str, shard_form: UpdateEnclave):
-    get_patch_delete_enclave(shard_id, shard_form, "PATCH")
+@app.get('/Enclave/{enclave_id}')
+def get_enclave(enclave_id: str):
+    get_patch_delete_enclave(enclave_id, {}, "GET")
 
 
-@app.delete('/Enclave/{id}')
-def delete_enclave(shard_id: str, shard_form: UpdateEnclave):
-    get_patch_delete_enclave(shard_id, shard_form, "DELETE")
+@app.patch('/Enclave/{enclave_id}')
+def patch_enclave(enclave_id: str, shard_form: UpdateEnclave):
+    get_patch_delete_enclave(enclave_id, shard_form, "PATCH")
 
 
-@app.get('/Enclave/{id}')
-def get_patch_delete_enclave(enclave_id: str, enclave_request: UpdateEnclave, method: str):
+@app.delete('/Enclave/{enclave_id}')
+def delete_enclave(enclave_id: str, shard_form: DeleteEnclave):
+    get_patch_delete_enclave(enclave_id, shard_form, "DELETE")
+
+
+def get_patch_delete_enclave(enclave_id: str, enclave_request, method: str):
     key = { 'id': enclave_id }
     enclave = enclaveTable.get_item(Key=key).get('Item')
     if enclave:
@@ -175,12 +179,12 @@ class GetShards(BaseModel):
     lower_bound: str
 
 
-@app.get('/Shards/{shard_id}')
-def get_shards(shard_id: str, form: GetShards):
+@app.get('/Shards/{channel_id}')
+def get_shards(channel_id: str, form: GetShards):
     lowbound = form.lower_bound
     hibound = form.upper_bound
     shards = shardTable.query(
-        KeyConditionExpression=Key('id_attach').eq(shard_id) & Key('burn_at').gte(lowbound) & Key('burn_at').lte(
+        KeyConditionExpression=Key('id_attach').eq(channel_id) & Key('burn_at').gte(lowbound) & Key('burn_at').lte(
             hibound)).get('Items')
     return json_response({ "posts": shards })
 
@@ -191,18 +195,23 @@ class UpdateShard(BaseModel):
     shard: str
 
 
-@app.get('/Shard/{id}')
-def get_shard(shard_id: str, shard_form: UpdateShard):
-    get_patch_delete_shard(shard_id, shard_form, "GET")
+class DeleteShard(BaseModel):
+    usrId: str
+    signedData: str
 
 
-@app.patch('/Shard/{id}')
+@app.get('/Shard/{shard_id}')
+def get_shard(shard_id: str):
+    get_patch_delete_shard(shard_id, {}, "GET")
+
+
+@app.patch('/Shard/{shard_id}')
 def patch_shard(shard_id: str, shard_form: UpdateShard):
     get_patch_delete_shard(shard_id, shard_form, "PATCH")
 
 
-@app.delete('/Shard/{id}')
-def delete_shard(shard_id: str, shard_form: UpdateShard):
+@app.delete('/Shard/{shard_id}')
+def delete_shard(shard_id: str, shard_form: DeleteShard):
     get_patch_delete_shard(shard_id, shard_form, "DELETE")
 
 

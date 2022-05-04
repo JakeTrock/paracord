@@ -74,7 +74,7 @@ Resources:
         getEnclave:
           Type: Api
           Properties:
-            Path: /Enclave/{id}/
+            Path: /Enclave/{enclave_id}/
             Method: get
         uploadEnclave:
           Type: Api #returns ID of thingy you just created
@@ -84,32 +84,32 @@ Resources:
         updateEnclave:
           Type: Api # requires signature identification
           Properties:
-            Path: /Enclave/{id}/
+            Path: /Enclave/{enclave_id}/
             Method: patch
         deleteEnclave:
           Type: Api # requires signature identification
           Properties:
-            Path: /Enclave/{id}/
+            Path: /Enclave/{enclave_id}/
             Method: delete
         uploadShard:
           Type: Api #returns ID of thingy you just created
           Properties:
-            Path: /Shard/{id}/
+            Path: /Shard/{shard_id}/
             Method: post
         updateShard:
           Type: Api # updates item if you can successfully sign a garbage string
           Properties: 
-            Path: /Shard/{id}/
+            Path: /Shard/{shard_id}/
             Method: patch
         deleteShard:
           Type: Api # deletes item if you can successfully sign a garbage string
           Properties: 
-            Path: /Shard/{id}/
+            Path: /Shard/{shard_id}/
             Method: delete
         getShards:
           Type: Api # gets all shards connected to an ID
           Properties: 
-            Path: /Shards/{id}/
+            Path: /Shards/{channel_id}/
             Method: get
 
 Outputs:

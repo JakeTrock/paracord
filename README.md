@@ -30,5 +30,5 @@ aws cloudformation delete-stack --stack-name paracord
 
 # run
 ```
-uvicorn app.app:app --reload
+./venv/bin/uvicorn app.app:app --reload
 ```
