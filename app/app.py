@@ -1,5 +1,6 @@
 import datetime
 import json
+import math
 import re
 import uuid
 from secrets import token_bytes
@@ -91,7 +92,7 @@ class DeleteEnclave(BaseModel):
 
 @app.get('/Enclave/{enclave_id}')
 def get_enclave(enclave_id: str):
-    get_patch_delete_enclave(enclave_id, {}, "GET")
+    get_patch_delete_enclave(enclave_id, { }, "GET")
 
 
 @app.patch('/Enclave/{enclave_id}')
@@ -125,9 +126,10 @@ def get_patch_delete_enclave(enclave_id: str, enclave_request, method: str):
             if verify_signature(usr_id, eckeys[0], eckeys[1]):  # check user key
                 if verify_signature(usr_id, eckeys[3], signed_data):  # check nextkey
                     if method == 'PATCH' and enclave_request.enclave is not None:
-                        attribute_updates = { 'body': { 'Value': bytes(enclave_request.enclave, 'utf-8'), 'Action': 'PUT' },
-                                              'sigblock': { 'Value': f"{eckeys[3]}::{signed_data}::{token_bytes(20)}",
-                                                            'Action': 'PUT' }, }
+                        attribute_updates = {
+                            'body': { 'Value': bytes(enclave_request.enclave, 'utf-8'), 'Action': 'PUT' },
+                            'sigblock': { 'Value': f"{eckeys[3]}::{signed_data}::{token_bytes(20)}",
+                                          'Action': 'PUT' }, }
                         enclaveTable.update_item(Key=key, AttributeUpdates=attribute_updates)
                         return json_response({ "message": "Entry updated" })
                     elif method == 'DELETE':
@@ -151,7 +153,7 @@ class PostShard(BaseModel):
     presign: str
     postsign: str
     body: str
-    burnDays: str
+    burnPeriod: str # truncation period where object is deleted. Can be h, d, m, y(hour day month year)
 
 
 @app.post('/Shard')
@@ -159,14 +161,31 @@ def post_shards(post_shard: PostShard):
     presig = post_shard.presig
     postsig = post_shard.postsig
     usr_id = post_shard.usrId
+    idattach = post_shard.idAttach
 
     if verify_signature(usr_id, presig, postsig):
+        prior = shardTable.scan(Limit=1, ScanIndexForward=False,
+                                KeyConditionExpression=Key('id_attach').eq(idattach) & Key('order').lte(math.inf))
         ecid = str(uuid.uuid4())
         post_obj = { 'id': ecid, 'sigblock': f"{presig}::{postsig}::{token_bytes(20)}",
-                     'id_attach': post_shard.idAttach, 'body': post_shard.body }
+                     'id_attach': idattach, 'body': post_shard.body }
 
-        if 'burn_days' in post_shard and is_int(post_shard.burnDays):
-            post_obj['burn_at'] = (datetime.now() + datetime.timedelta(days=post_shard.burnDays)).isoformat()
+        if 'Items' in prior and prior['Items'][0] is not None: # post order should be one greater than last
+            post_obj['order'] = prior['Items'][0] + 1
+        else:
+            post_obj['order'] = 0
+
+        if 'burnPeriod' in post_shard:
+            now = datetime.now()
+            if post_shard.burnPeriod == "h":
+                now = now.replace(minute=0)
+            elif post_shard.burnPeriod == "d":
+                now = now.replace(minute=0, hour=0)
+            elif post_shard.burnPeriod == "m":
+                now = now.replace(minute=0, hour=0, day=0)
+            elif post_shard.burnPeriod == "y":
+                now = now.replace(minute=0, hour=0, day=0, month=0)
+            post_obj['burn_at'] = now.isoformat()
 
         shardTable.put_item(Item=post_obj)
         return json_response({ "id": ecid })
@@ -184,7 +203,7 @@ def get_shards(channel_id: str, form: GetShards):
     lowbound = form.lower_bound
     hibound = form.upper_bound
     shards = shardTable.query(
-        KeyConditionExpression=Key('id_attach').eq(channel_id) & Key('burn_at').gte(lowbound) & Key('burn_at').lte(
+        KeyConditionExpression=Key('id_attach').eq(channel_id) & Key('order').gte(lowbound) & Key('order').lte(
             hibound)).get('Items')
     return json_response({ "posts": shards })
 
@@ -202,7 +221,7 @@ class DeleteShard(BaseModel):
 
 @app.get('/Shard/{shard_id}')
 def get_shard(shard_id: str):
-    get_patch_delete_shard(shard_id, {}, "GET")
+    get_patch_delete_shard(shard_id, { }, "GET")
 
 
 @app.patch('/Shard/{shard_id}')

@@ -41,14 +41,14 @@ Resources:
           AttributeType: S
         - AttributeName: sigblock # oldsignable::oldsignature::nextsignable
           AttributeType: S
+        - AttributeName: order # which post this is ordered as(this replaces date)
+            AttributeType: N
         - AttributeName: body #encrypted payload
           AttributeType: B
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-        - AttributeName: id_attach
-          KeyType: RANGE
-        - AttributeName: burn_at #sort by time you burn
+        - AttributeName: order
           KeyType: RANGE
       TimeToLiveSpecification:
         AttributeName: burn_at #expire date as unix timestamp
