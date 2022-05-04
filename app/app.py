@@ -29,7 +29,7 @@ UNAME_REGEX = re.compile("^(?!.*\.\.)(?!.*\.$)[^\W][\w.@]{0,32}$")
 # ENCLAVE HANDLERS
 
 class PostEnclave(BaseModel):
-    type: int
+    enclaveType: int
     presig: str
     postsig: str
     enclave: str
@@ -39,7 +39,7 @@ class PostEnclave(BaseModel):
 
 @app.post('/Enclave')
 def post_enclaves(enclave_form: PostEnclave):
-    ftype = enclave_form.type
+    ftype = enclave_form.enclaveType
     # user(0)
     # spine(1)
     # key(2)
@@ -49,7 +49,6 @@ def post_enclaves(enclave_form: PostEnclave):
         postsig = enclave_form.postsig
         enc = enclave_form.enclave
         digest.update(presig)  # get presigned txt from request
-        # TODO: if you can only sign string types, you may need to convert to string here and on client
 
         # Load public key (not private key) and verify signature, bypass getting key if you are uploading your key for the first time
         public_key = RSA.importKey(enc) if ftype == 2 else RSA.importKey(
@@ -122,7 +121,7 @@ def get_patch_delete_enclave(enclave_id: str, enclave_request: UpdateEnclave, me
             if verify_signature(usr_id, eckeys[0], eckeys[1]):  # check user key
                 if verify_signature(usr_id, eckeys[3], signed_data):  # check nextkey
                     if method == 'PATCH' and enclave_request.enclave is not None:
-                        attribute_updates = { 'body': { 'Value': enclave_request.enclave, 'Action': 'PUT' },
+                        attribute_updates = { 'body': { 'Value': bytes(enclave_request.enclave, 'utf-8'), 'Action': 'PUT' },
                                               'sigblock': { 'Value': f"{eckeys[3]}::{signed_data}::{token_bytes(20)}",
                                                             'Action': 'PUT' }, }
                         enclaveTable.update_item(Key=key, AttributeUpdates=attribute_updates)
@@ -262,13 +261,11 @@ def is_int(val):
 
 # https://gist.github.com/aellerton/2988ff93c7d84f3dbf5b9b5a09f38ceb
 
-
 def verify_signature(usr_id, presig, postsig):
     # find newest record less than the biggest date, aka newest unsigned sig
     usrkey = enclaveTable.get_item(Key={ 'id': usr_id, 'type': 2 }).get('Item').enclave
     digest = SHA256.new()
     digest.update(presig)
-    # TODO: if you can only sign string types, you may need to convert to string here and on client
 
     # Load public key (not private key) and verify signature
     public_key = RSA.importKey(usrkey)

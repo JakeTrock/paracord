@@ -107,10 +107,10 @@ Resources:
             Path: /Shard/{id}/
             Method: delete
         getShards:
-          Type: Api # updates item if you can successfully sign a garbage string
+          Type: Api # gets all shards connected to an ID
           Properties: 
             Path: /Shards/{id}/
-            Method: patch
+            Method: get
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function

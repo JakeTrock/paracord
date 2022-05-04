@@ -5,22 +5,30 @@ There is no frontend yet but soon there will be. The backend is simply an encryp
 
 Also, in the future either a longer term s3 option will be added for file hosting or we will add a pure peer-to-peer seeded file host system.
 
-```sh
+
 # setup locally
-virtualenv -p python3.8 -v venv
+```sh
+virtualenv -p python3.10 -v venv
 source venv/bin/activate
 pip install -r tests/requirements.txt -r app/requirements.txt
-
+```
 # test
+```
 pytest -v
+```
 
 # deploy
+```
 sam build --use-container
 sam deploy --guided
+```
 
 # destroy
-aws cloudformation delete-stack --stack-name demo
+```
+aws cloudformation delete-stack --stack-name paracord
+```
 
 # run
+```
 uvicorn app.app:app --reload
 ```
