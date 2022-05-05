@@ -178,9 +178,9 @@ def post_shards(post_shard: PostShard):
         if 'burnPeriod' in post_shard:
             now = datetime.now()
             if post_shard.burnPeriod == "h":
-                now = now.replace(minute=0)
+                now = now.replace(minute=0) + datetime.timedelta(hours=1)
             elif post_shard.burnPeriod == "d":
-                now = now.replace(minute=0, hour=0)
+                now = now.replace(minute=0, hour=0) + datetime.timedelta(days=1)
             elif post_shard.burnPeriod == "m":
                 now = now.replace(minute=0, hour=0, day=0)
             elif post_shard.burnPeriod == "y":
