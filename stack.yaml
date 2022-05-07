@@ -2,13 +2,38 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   paracord-backend
-  He who creates open protocol is he who shapes the future.
-  He who locks his protocol behind a wall is doomed to the infinite tech turnover cycle.
+  oh how beautiful it could be. oh how beautiful it will be.
 Globals:
   Function:
     Timeout: 3
 
 Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+    DeletionPolicy: Retain
+    BucketPolicy:
+      Type: 'AWS::S3::BucketPolicy'
+      Properties:
+        PolicyDocument:
+          Id: Paracord
+          Version: 2012-10-17
+          Statement:
+            - Sid: PublicReadForGetBucketObjects
+              Effect: Allow
+              Principal: '*'
+              Action: 's3:GetObject'
+              Resource: !Join
+                - ''
+                - - 'arn:aws:s3:::'
+                  - !Ref S3Bucket
+                  - /*
+        Bucket: !Ref S3Bucket
+
   Enclave: # this can be a user, spine, or key enclave
     Type: AWS::DynamoDB::Table
     Properties:
@@ -25,7 +50,6 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-          # TODO: could/should type be a sort?
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5

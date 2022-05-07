@@ -16,16 +16,13 @@ from pydantic import BaseModel
 
 app = FastAPI()
 ddb = boto3.resource('dynamodb')
+s3c = boto3.resource('s3')
+bucketname = "paracord_uploads"
+
 enclaveTable = ddb.Table('Enclaves')
 shardTable = ddb.Table('Shards')
 
 UNAME_REGEX = re.compile("^(?!.*\.\.)(?!.*\.$)[^\W][\w.@]{0,32}$")
-
-
-# TODOS:
-# simplify code
-# write frontend interactions
-# check code
 
 # ENCLAVE HANDLERS
 
@@ -44,7 +41,7 @@ def post_enclaves(enclave_form: PostEnclave):
     # user(0)
     # spine(1)
     # key(2)
-    if ftype == 0 and ftype == 1 and ftype == 2:
+    if ftype == 0 or ftype == 1 or ftype == 2:
         digest = SHA256.new()
         presig = enclave_form.presig
         postsig = enclave_form.postsig
@@ -271,6 +268,12 @@ def get_patch_delete_shard(shard_id: str, shard_form: UpdateShard, method: str):
     else:
         return json_response({ "message": "shard not found" }, 404)
 
+# GLOB HANDLERS
+
+#TODO: globs that burn
+ # s3c.upload_file(Filename, bucketname, key, ExtraArgs={"Metadata": {"metadata1":"ImageName","metadata2":"ImagePROPERTIES" ,"metadata3":"ImageCREATIONDATE"}})
+
+# s3c.download_file(bucketname, filename)
 
 handler = Mangum(app)
 

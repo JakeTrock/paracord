@@ -1,3 +1,7 @@
 .idea
 /node_modules
 dist
+.terraform
+.terraform.lock.hcl
+.env
+**/__pycache__
